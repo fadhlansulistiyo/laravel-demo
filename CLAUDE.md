@@ -4,7 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Laravel 12 application using Inertia.js with React as the frontend framework. The stack includes Laravel Breeze for authentication, Tailwind CSS for styling, and Pest for testing.
+This is a Laravel 12 application using Inertia.js with React as the frontend framework. The stack includes:
+
+- **Laravel 12** with Inertia.js adapter
+- **React 18** for frontend UI
+- **Laravel Breeze** for authentication scaffolding
+- **Tailwind CSS** for styling
+- **shadcn/ui** for pre-built React components (New York style)
+- **Pest** for testing
+- **Laravel Pint** for PHP code style
+- **Ziggy** for Laravel route access in JavaScript
 
 ## Development Commands
 
@@ -83,7 +92,17 @@ npm run build
   - `Welcome.jsx` - Public landing page
 - **Layouts**: `resources/js/Layouts/` - Shared layout components
 - **Components**: `resources/js/Components/` - Reusable React components
+  - `ui/` - shadcn/ui components (button, card, dialog, etc.)
+- **Hooks**: `resources/js/hooks/` - Custom React hooks
+- **Utilities**: `resources/js/lib/` - Utility functions (including `cn()` for className merging)
 - **Styles**: `resources/css/app.css` - Tailwind CSS entry point
+
+**Path Aliases** (configured in `jsconfig.json`):
+- `@/*` → `resources/js/*`
+- `@/components` → `resources/js/Components`
+- `@/components/ui` → `resources/js/Components/ui`
+- `@/lib` → `resources/js/lib`
+- `@/hooks` → `resources/js/hooks`
 
 ### Inertia.js Pattern
 
@@ -101,6 +120,21 @@ This app uses Tightenco Ziggy for accessing Laravel routes in JavaScript:
 
 - Use `route('route.name')` in React components to generate URLs
 - Route definitions from `routes/web.php` are available on the frontend
+
+### shadcn/ui Components
+
+This project uses shadcn/ui (New York style) for pre-built, customizable React components:
+
+- Components are located in `resources/js/Components/ui/`
+- Configuration is in `components.json`
+- Uses Radix UI primitives under the hood
+- Styling with Tailwind CSS and CSS variables
+- Use the `cn()` utility from `@/lib/utils` for className merging
+
+To add new shadcn/ui components, you would typically use:
+```bash
+npx shadcn@latest add [component-name]
+```
 
 ## Key Configuration Files
 
