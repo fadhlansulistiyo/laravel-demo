@@ -425,3 +425,335 @@ php artisan db:seed --class=DevelopmentSeeder
 **Phase 1 Complete!** 🎉
 
 All database foundations are in place. The system is now ready for Phase 2: Backend Logic implementation.
+
+---
+
+## Phase 2: Backend Logic ✅
+
+**Status**: COMPLETED  
+**Date**: October 31, 2025
+
+---
+
+## Overview
+
+Phase 2 built the business logic layer, implementing validation, services, authorization, resource transformers, and controllers. This phase demonstrates Laravel's request validation, service layer pattern, policy-based authorization, and resource transformers.
+
+---
+
+## Created Files
+
+### 1. Form Request Classes (Validation)
+
+Form Requests encapsulate validation logic, similar to Zod schemas in Next.js but integrated with Laravel.
+
+#### `app/Http/Requests/StoreProjectRequest.php`
+- **Purpose**: Validate project creation data
+- **Rules**:
+  - name: required, max 255 chars
+  - description: optional, max 1000 chars
+  - status: required, must be valid ProjectStatus enum value
+  - start_date: optional, must be today or later
+  - end_date: optional, must be after start_date
+- **Learning Note**: Form Requests automatically return validation errors to the frontend
+
+#### `app/Http/Requests/UpdateProjectRequest.php`
+- **Purpose**: Validate project update data
+- **Rules**: Similar to Store but uses `sometimes` for partial updates
+- **Learning Note**: `sometimes` rule only validates if field is present in request
+
+#### `app/Http/Requests/StoreTaskRequest.php`
+- **Purpose**: Validate task creation data
+- **Rules**:
+  - project_id: required, must exist in projects table
+  - assigned_to: optional, must exist in users table
+  - title: required, max 255 chars
+  - priority: required, valid TaskPriority enum
+  - status: required, valid TaskStatus enum
+  - due_date: optional, today or later
+- **Learning Note**: `exists:table,column` validates foreign key references
+
+#### `app/Http/Requests/UpdateTaskRequest.php`
+- **Purpose**: Validate task update data
+- **Rules**: Similar to Store but allows partial updates
+
+---
+
+### 2. Service Classes (Business Logic)
+
+Service classes separate business logic from controllers, promoting code reusability and testability.
+
+#### `app/Services/ProjectService.php`
+- **Purpose**: Handle project-related business logic
+- **Key Methods**:
+  - `getUserProjects()`: Get paginated projects with relationships
+  - `getActiveProjects()`: Get only active projects
+  - `createProject()`: Create new project for user
+  - `updateProject()`: Update existing project
+  - `deleteProject()`: Delete project (cascade to tasks)
+  - `getProjectDetails()`: Get project with full stats
+  - `getProjectStats()`: Calculate project statistics
+  - `searchProjects()`: Search by name/description
+  - `archiveProject()`: Mark project as archived
+  - `completeProject()`: Mark project as completed
+- **Learning Note**: Services use dependency injection and are easily mockable for testing
+
+#### `app/Services/TaskService.php`
+- **Purpose**: Handle task-related business logic
+- **Key Methods**:
+  - `getUserTasks()`: Get paginated tasks for user
+  - `getAssignedTasks()`: Get tasks assigned to specific user
+  - `getProjectTasks()`: Get all tasks for a project
+  - `createTask()`: Create new task
+  - `updateTask()`: Update existing task
+  - `deleteTask()`: Delete task
+  - `assignTask()`: Assign task to user
+  - `updateTaskStatus()`: Change task status
+  - `completeTask()`: Mark task as completed
+  - `getOverdueTasks()`: Get overdue tasks
+  - `getTasksDueSoon()`: Get tasks due within timeframe
+  - `getUserTaskStats()`: Calculate task statistics
+  - `searchTasks()`: Search by title/description
+- **Learning Note**: Query scopes (defined in models) make service methods cleaner
+
+---
+
+### 3. Policy Classes (Authorization)
+
+Policies handle authorization logic, determining who can perform actions on models.
+
+#### `app/Policies/ProjectPolicy.php`
+- **Purpose**: Authorize project-related actions
+- **Methods**:
+  - `viewAny()`: Anyone can view their own projects list
+  - `view()`: Users can view their own projects, admins can view all
+  - `create()`: All authenticated users can create projects
+  - `update()`: Project owners and admins can update
+  - `delete()`: Project owners and admins can delete
+  - `forceDelete()`: Only admins can permanently delete
+- **Learning Note**: Policies automatically map to controller methods
+
+#### `app/Policies/TaskPolicy.php`
+- **Purpose**: Authorize task-related actions
+- **Methods**:
+  - `viewAny()`: Anyone can view tasks from their projects
+  - `view()`: Users can view tasks from their projects, admins can view all
+  - `create()`: All authenticated users can create tasks
+  - `update()`: Project owners, assigned users, and admins can update
+  - `delete()`: Only project owners and admins can delete
+  - `forceDelete()`: Only admins can permanently delete
+- **Learning Note**: Tasks check project ownership since they belong to projects
+
+---
+
+### 4. Resource Classes (Data Transformation)
+
+Resources transform models into JSON, controlling what data is exposed to the frontend.
+
+#### `app/Http/Resources/UserResource.php`
+- **Purpose**: Transform User model for API responses
+- **Exposed Fields**:
+  - id, name, email
+  - role (with label)
+  - timestamps
+  - Conditional: projects, assigned_tasks (if loaded)
+- **Learning Note**: Sensitive data (password, remember_token) is hidden
+
+#### `app/Http/Resources/ProjectResource.php`
+- **Purpose**: Transform Project model for API responses
+- **Exposed Fields**:
+  - id, user_id, name, description
+  - status (with label and color)
+  - dates
+  - Computed: progress percentage
+  - Conditional: user, tasks, counts (if loaded)
+- **Learning Note**: `whenLoaded()` only includes relationships if eager loaded
+
+#### `app/Http/Resources/TaskResource.php`
+- **Purpose**: Transform Task model for API responses
+- **Exposed Fields**:
+  - id, project_id, assigned_to, title, description
+  - priority (with label, color, weight)
+  - status (with label, color, is_final)
+  - dates
+  - Computed: is_overdue, days_until_due
+  - Conditional: project, assigned_user (if loaded)
+- **Learning Note**: Resources can include computed properties from model accessors
+
+---
+
+### 5. Controllers (HTTP Request Handlers)
+
+Controllers handle HTTP requests, coordinate services, and return responses.
+
+#### `app/Http/Controllers/DashboardController.php`
+- **Purpose**: Display dashboard with stats and recent activity
+- **Methods**:
+  - `index()`: Show dashboard with project/task stats, recent items, overdue tasks
+- **Learning Note**: Uses services to fetch data, returns Inertia response
+
+#### `app/Http/Controllers/ProjectController.php`
+- **Purpose**: Handle project CRUD operations
+- **Methods** (RESTful resource controller):
+  - `index()`: List all user's projects
+  - `create()`: Show project creation form
+  - `store()`: Save new project (uses StoreProjectRequest)
+  - `show()`: Display single project with details
+  - `edit()`: Show project edit form
+  - `update()`: Save project changes (uses UpdateProjectRequest)
+  - `destroy()`: Delete project
+- **Learning Note**: `authorizeResource()` automatically authorizes all actions
+
+#### `app/Http/Controllers/TaskController.php`
+- **Purpose**: Handle task CRUD operations
+- **Methods** (RESTful resource controller):
+  - `index()`: List all user's tasks
+  - `create()`: Show task creation form (with projects, users for assignment)
+  - `store()`: Save new task
+  - `show()`: Display single task
+  - `edit()`: Show task edit form
+  - `update()`: Save task changes
+  - `destroy()`: Delete task
+- **Learning Note**: Controllers are thin, delegating logic to services
+
+---
+
+### 6. Routes
+
+#### `routes/web.php` (Updated)
+- **Dashboard**: `/dashboard` → DashboardController@index
+- **Projects** (Resource routes):
+  - GET `/projects` → index
+  - GET `/projects/create` → create
+  - POST `/projects` → store
+  - GET `/projects/{project}` → show
+  - GET `/projects/{project}/edit` → edit
+  - PUT/PATCH `/projects/{project}` → update
+  - DELETE `/projects/{project}` → destroy
+- **Tasks** (Resource routes): Similar pattern to projects
+- **Learning Note**: `Route::resource()` generates all RESTful routes automatically
+
+---
+
+## Key Laravel Concepts Demonstrated
+
+### 1. MVC + Service Layer Architecture
+
+```
+Request → Controller → Service → Model → Database
+Response ← Controller ← Service ← Model ← Database
+```
+
+**Benefits**:
+- Controllers stay thin (routing HTTP requests)
+- Services contain reusable business logic
+- Models handle data access
+- Easy to test each layer independently
+
+### 2. Form Request Validation
+
+```php
+// Automatic validation before controller method
+public function store(StoreProjectRequest $request)
+{
+    // $request->validated() only contains valid data
+    $project = $this->projectService->createProject($user, $request->validated());
+}
+```
+
+**Similar to**: Zod validation in Next.js API routes
+
+### 3. Policy-Based Authorization
+
+```php
+// Automatic authorization check
+$this->authorizeResource(Project::class, 'project');
+
+// In policy:
+public function update(User $user, Project $project): bool
+{
+    return $user->id === $project->user_id || $user->isAdmin();
+}
+```
+
+**Similar to**: Middleware checks in Next.js, but more granular
+
+### 4. Resource Transformers
+
+```php
+// Consistent API responses
+return Inertia::render('Projects/Index', [
+    'projects' => ProjectResource::collection($projects),
+]);
+```
+
+**Similar to**: DTOs or serializers in other frameworks
+
+### 5. Dependency Injection
+
+```php
+public function __construct(
+    private ProjectService $projectService,
+    private TaskService $taskService
+) {}
+```
+
+**Benefits**:
+- Automatic resolution by Laravel container
+- Easy to mock for testing
+- Promotes loose coupling
+
+---
+
+## Testing the Backend
+
+Test the routes with these commands:
+
+```bash
+# List all routes
+php artisan route:list
+
+# Filter by name
+php artisan route:list --name=projects
+
+# Filter by method
+php artisan route:list --method=GET
+
+# Test in Tinker
+php artisan tinker
+>>> $user = User::first()
+>>> $project = app(App\Services\ProjectService::class)->createProject($user, [
+...     'name' => 'Test Project',
+...     'status' => 'active',
+... ])
+```
+
+---
+
+## Comparison with Next.js Architecture
+
+| Aspect | Laravel | Next.js |
+|--------|---------|---------|
+| **Routing** | routes/web.php | app/ directory |
+| **Controllers** | Controller classes | Route handlers |
+| **Validation** | Form Requests | Zod schemas |
+| **Business Logic** | Service classes | Server functions |
+| **Authorization** | Policies | Middleware/checks |
+| **Data Transform** | Resources | Manual serialization |
+| **Dependency Injection** | Built-in container | Manual or libraries |
+
+---
+
+## What's Next: Phase 3
+
+Phase 3 will focus on **Frontend Components**:
+1. Create shadcn/ui components (card, badge, select, dialog, etc.)
+2. Create base components (StatCard, ProjectCard, TaskCard)
+3. Create form components (ProjectForm, TaskForm)
+4. Create list components (ProjectList, TaskList)
+
+**Backend is complete!** 🎉 The API layer is fully functional and ready for frontend integration.
+
+---
+
+**Phase 2 Complete!** All backend logic is in place.
