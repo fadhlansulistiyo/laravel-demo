@@ -47,30 +47,25 @@ export default function TaskForm({
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Convert empty strings to null for nullable fields
-        const submitData = {
-            ...data,
-            assigned_to: data.assigned_to || null,
-            due_date: data.due_date || null,
-            description: data.description || null,
+        const options = {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (!isEditing) {
+                    reset();
+                }
+            },
+            transform: (data) => ({
+                ...data,
+                assigned_to: data.assigned_to || null,
+                due_date: data.due_date || null,
+                description: data.description || null,
+            }),
         };
 
         if (isEditing) {
-            put(route('tasks.update', task.id), {
-                data: submitData,
-                preserveScroll: true,
-                onSuccess: () => {
-                    // Success notification will be handled by the page
-                },
-            });
+            put(route('tasks.update', task.id), options);
         } else {
-            post(route('tasks.store'), {
-                data: submitData,
-                preserveScroll: true,
-                onSuccess: () => {
-                    reset();
-                },
-            });
+            post(route('tasks.store'), options);
         }
     };
 
@@ -110,7 +105,7 @@ export default function TaskForm({
                             Project <span className="text-destructive">*</span>
                         </Label>
                         <Select
-                            value={data.project_id.toString()}
+                            value={data.project_id ? data.project_id.toString() : undefined}
                             onValueChange={(value) => setData('project_id', parseInt(value))}
                         >
                             <SelectTrigger className={errors.project_id ? 'border-destructive' : ''}>
@@ -232,14 +227,14 @@ export default function TaskForm({
                         <div className="space-y-2">
                             <Label htmlFor="assigned_to">Assign To</Label>
                             <Select
-                                value={data.assigned_to ? data.assigned_to.toString() : ''}
-                                onValueChange={(value) => setData('assigned_to', value ? parseInt(value) : '')}
+                                value={data.assigned_to ? data.assigned_to.toString() : 'unassigned'}
+                                onValueChange={(value) => setData('assigned_to', value === 'unassigned' ? '' : parseInt(value))}
                             >
                                 <SelectTrigger className={errors.assigned_to ? 'border-destructive' : ''}>
                                     <SelectValue placeholder="Select a user (optional)" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Unassigned</SelectItem>
+                                    <SelectItem value="unassigned">Unassigned</SelectItem>
                                     {users.map((user) => (
                                         <SelectItem key={user.id} value={user.id.toString()}>
                                             {user.name} ({user.email})

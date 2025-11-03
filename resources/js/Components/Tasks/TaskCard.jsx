@@ -23,6 +23,11 @@ import {
  * @param {boolean} showProject - Whether to show project name (default: true)
  */
 export default function TaskCard({ task, onDelete, showProject = true }) {
+    // Handle nested resource wrapping
+    // Laravel API Resources wrap nested resources in a 'data' property
+    const project = task.project?.data || task.project;
+    const assignedUser = task.assigned_user?.data || task.assigned_user;
+
     const getPriorityColor = (priority) => {
         const colors = {
             low: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950',
@@ -116,14 +121,14 @@ export default function TaskCard({ task, onDelete, showProject = true }) {
             </CardHeader>
             <CardContent className="space-y-3">
                 {/* Project Name */}
-                {showProject && task.project && (
+                {showProject && project && (
                     <div className="flex items-center gap-2 text-sm">
                         <span className="text-muted-foreground">Project:</span>
                         <Link
-                            href={route('projects.show', task.project.id)}
+                            href={route('projects.show', project.id)}
                             className="font-medium hover:text-primary transition-colors"
                         >
-                            {task.project.name}
+                            {project.name}
                         </Link>
                     </div>
                 )}
@@ -142,16 +147,16 @@ export default function TaskCard({ task, onDelete, showProject = true }) {
                 )}
 
                 {/* Assigned User */}
-                {task.assigned_user && (
+                {assignedUser && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Assigned to:</span>
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                                 <AvatarFallback className="text-xs">
-                                    {getInitials(task.assigned_user.name)}
+                                    {getInitials(assignedUser.name)}
                                 </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium">{task.assigned_user.name}</span>
+                            <span className="text-sm font-medium">{assignedUser.name}</span>
                         </div>
                     </div>
                 )}

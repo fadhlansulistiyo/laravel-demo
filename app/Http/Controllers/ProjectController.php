@@ -10,6 +10,7 @@ use App\Services\ProjectService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\Request;
 
 /**
  * Project Controller
@@ -31,7 +32,7 @@ class ProjectController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(\Illuminate\Http\Request $request): Response
+    public function index(Request $request): Response
     {
         $user = $request->user();
         $projects = $this->projectService->getUserProjects($user);
@@ -54,11 +55,11 @@ class ProjectController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreProjectRequest $request): RedirectResponse
+    public function store(Request $request, StoreProjectRequest $storeProjectRequest): RedirectResponse
     {
         /** @var \App\Models\User $user */
         $user = $request->user();
-        $project = $this->projectService->createProject($user, $request->validated());
+        $project = $this->projectService->createProject($user, $storeProjectRequest->validated());
 
         return redirect()
             ->route('projects.show', $project)

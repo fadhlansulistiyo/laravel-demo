@@ -25,6 +25,10 @@ export default function Index({ tasks }) {
     const { toast } = useToast();
     const [taskToDelete, setTaskToDelete] = useState(null);
 
+    // Handle paginated data structure
+    // Laravel pagination returns: { data: [...], links: {...}, meta: {...} }
+    const tasksList = Array.isArray(tasks) ? tasks : (tasks?.data || []);
+
     const handleDelete = (task) => {
         setTaskToDelete(task);
     };
@@ -70,7 +74,7 @@ export default function Index({ tasks }) {
 
             <div className="py-8">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <TaskList tasks={tasks.data || tasks} onDelete={handleDelete} />
+                    <TaskList tasks={tasksList} onDelete={handleDelete} />
                 </div>
             </div>
 

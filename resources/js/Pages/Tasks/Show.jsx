@@ -36,6 +36,11 @@ export default function Show({ task }) {
     const { toast } = useToast();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+    // Handle nested resource wrapping
+    // Laravel API Resources wrap nested resources in a 'data' property
+    const project = task.project?.data || task.project;
+    const assignedUser = task.assigned_user?.data || task.assigned_user;
+
     const getPriorityColor = (priority) => {
         const colors = {
             low: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950',
@@ -152,16 +157,16 @@ export default function Show({ task }) {
                             {/* Task Metadata */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Project */}
-                                {task.project && (
+                                {project && (
                                     <div className="flex items-start gap-3 p-4 border rounded-lg">
                                         <FolderKanban className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div className="flex-1">
                                             <p className="text-sm font-medium mb-1">Project</p>
                                             <Link
-                                                href={route('projects.show', task.project.id)}
+                                                href={route('projects.show', project.id)}
                                                 className="text-primary hover:underline font-medium"
                                             >
-                                                {task.project.name}
+                                                {project.name}
                                             </Link>
                                         </div>
                                     </div>
@@ -172,14 +177,14 @@ export default function Show({ task }) {
                                     <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                                     <div className="flex-1">
                                         <p className="text-sm font-medium mb-1">Assigned To</p>
-                                        {task.assigned_user ? (
+                                        {assignedUser ? (
                                             <div className="flex items-center gap-2">
                                                 <Avatar className="h-6 w-6">
                                                     <AvatarFallback className="text-xs">
-                                                        {getInitials(task.assigned_user.name)}
+                                                        {getInitials(assignedUser.name)}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                                <span>{task.assigned_user.name}</span>
+                                                <span>{assignedUser.name}</span>
                                             </div>
                                         ) : (
                                             <span className="text-muted-foreground">Unassigned</span>
