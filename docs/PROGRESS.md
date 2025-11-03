@@ -1536,3 +1536,108 @@ Phase 5 will focus on **Testing**:
 ---
 
 **Phase 4 Complete!** All pages are integrated and working.
+---
+
+## Issue Fixes: Projects & Tasks Features (November 3, 2025) ✅
+
+**Status**: COMPLETED
+**Date**: November 3, 2025
+
+---
+
+### Overview
+
+After Phase 4 completion, several issues were identified and resolved in the Projects and Tasks management features. All issues were related to Laravel API Resources integration with Inertia.js.
+
+---
+
+### Issues Resolved
+
+#### 1. Ziggy Route Error ✅
+- **Problem**: `Ziggy error: 'project' parameter is required for route 'projects.edit'`
+- **Cause**: API Resources wrapped data in `data` property, making `project.id` undefined
+- **Solution**: Added `->resolve()` to all API Resource returns in controllers
+
+#### 2. Edit Form Data Loading ✅
+- **Problem**: Project edit form not displaying existing dates
+- **Cause**: Same as Issue #1 - data wrapping prevented form access
+- **Solution**: Fixed by unwrapping API Resources
+
+#### 3. Date Picker Implementation ✅
+- **Problem**: Basic HTML date inputs instead of proper date picker
+- **Solution**: Created reusable DatePicker component using shadcn/ui
+- **New Component**: `resources/js/Components/ui/date-picker.jsx`
+- **Features**: Visual calendar, date-fns formatting, nullable date handling
+
+#### 4. Nested Collection Wrapping ✅
+- **Problem**: `TypeError: tasks.map is not a function`
+- **Cause**: Nested TaskResource collection remained wrapped even after parent resolve
+- **Solution**: Frontend unwrapping in component where data is consumed
+
+---
+
+### Technical Details
+
+**Laravel API Resource Wrapping**:
+```php
+// Without resolve
+new ProjectResource($project)  // { data: { id: 1 } }
+
+// With resolve (top-level unwrapped)
+(new ProjectResource($project))->resolve()  // { id: 1 }
+
+// Nested collections still wrapped
+['tasks' => TaskResource::collection($tasks)]  // { data: [...] }
+```
+
+**Solution Pattern**:
+
+Backend:
+```php
+return Inertia::render('Page', [
+    'resource' => (new ResourceClass($model))->resolve(),
+]);
+```
+
+Frontend:
+```jsx
+const items = Array.isArray(resource.items) 
+    ? resource.items 
+    : (resource.items?.data || []);
+```
+
+---
+
+### Files Modified
+
+**Backend**:
+- `app/Http/Controllers/ProjectController.php` - Added `->resolve()` to 3 methods
+- `app/Http/Controllers/TaskController.php` - Added `->resolve()` to 4 methods
+
+**Frontend**:
+- `resources/js/Components/ui/date-picker.jsx` - **New component**
+- `resources/js/Components/Projects/ProjectForm.jsx` - Integrated DatePicker
+- `resources/js/Pages/Projects/Show.jsx` - Added nested collection unwrapping
+
+---
+
+### Best Practices Learned
+
+1. Always use `->resolve()` when passing API Resources to Inertia.js
+2. Handle nested resource wrapping in frontend components
+3. Provide fallback arrays to prevent runtime errors
+4. Use proper date libraries (date-fns) for date handling
+5. Frontend fixes can be cleaner than backend workarounds for nested wrapping
+
+---
+
+### Documentation
+
+Complete issue details and solutions documented in:
+- `docs/ISSUE_FIXES.md` - Comprehensive issue documentation
+- `resources/js/Components/ui/date-picker-usage.md` - DatePicker usage examples
+
+---
+
+**All Issues Resolved!** 🎉 Projects and Tasks features are now fully functional and production-ready.
+

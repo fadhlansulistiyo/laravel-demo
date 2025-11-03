@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { DatePicker } from '@/components/ui/date-picker';
+import { format, parse } from 'date-fns';
 
 /**
  * ProjectForm Component
@@ -24,6 +26,16 @@ import { AlertCircle } from 'lucide-react';
  */
 export default function ProjectForm({ project = null, statuses = [] }) {
     const isEditing = !!project;
+
+    // Helper function to parse date string to Date object
+    const parseDate = (dateString) => {
+        if (!dateString) return undefined;
+        try {
+            return parse(dateString, 'yyyy-MM-dd', new Date());
+        } catch {
+            return undefined;
+        }
+    };
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: project?.name || '',
@@ -145,11 +157,10 @@ export default function ProjectForm({ project = null, statuses = [] }) {
                         {/* Start Date */}
                         <div className="space-y-2">
                             <Label htmlFor="start_date">Start Date</Label>
-                            <Input
-                                id="start_date"
-                                type="date"
-                                value={data.start_date}
-                                onChange={(e) => setData('start_date', e.target.value)}
+                            <DatePicker
+                                date={data.start_date ? parseDate(data.start_date) : undefined}
+                                onSelect={(date) => setData('start_date', date ? format(date, 'yyyy-MM-dd') : '')}
+                                placeholder="Select start date"
                                 className={errors.start_date ? 'border-destructive' : ''}
                             />
                             {errors.start_date && (
@@ -163,11 +174,10 @@ export default function ProjectForm({ project = null, statuses = [] }) {
                         {/* End Date */}
                         <div className="space-y-2">
                             <Label htmlFor="end_date">End Date</Label>
-                            <Input
-                                id="end_date"
-                                type="date"
-                                value={data.end_date}
-                                onChange={(e) => setData('end_date', e.target.value)}
+                            <DatePicker
+                                date={data.end_date ? parseDate(data.end_date) : undefined}
+                                onSelect={(date) => setData('end_date', date ? format(date, 'yyyy-MM-dd') : '')}
+                                placeholder="Select end date"
                                 className={errors.end_date ? 'border-destructive' : ''}
                             />
                             {errors.end_date && (

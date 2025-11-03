@@ -37,7 +37,7 @@ class ProjectController extends Controller
         $projects = $this->projectService->getUserProjects($user);
 
         return Inertia::render('Projects/Index', [
-            'projects' => ProjectResource::collection($projects),
+            'projects' => ProjectResource::collection($projects)->resolve(),
         ]);
     }
 
@@ -74,7 +74,7 @@ class ProjectController extends Controller
         $projectStats = $this->projectService->getProjectStats($project);
 
         return Inertia::render('Projects/Show', [
-            'project' => new ProjectResource($projectDetails),
+            'project' => (new ProjectResource($projectDetails))->resolve(),
             'stats' => $projectStats,
         ]);
     }
@@ -85,7 +85,7 @@ class ProjectController extends Controller
     public function edit(Project $project): Response
     {
         return Inertia::render('Projects/Edit', [
-            'project' => new ProjectResource($project),
+            'project' => (new ProjectResource($project))->resolve(),
             'statuses' => \App\Enums\ProjectStatus::toArray(),
         ]);
     }

@@ -46,8 +46,8 @@ class TaskController extends Controller
             ->get();
 
         return Inertia::render('Tasks/Index', [
-            'tasks' => TaskResource::collection($tasks),
-            'projects' => ProjectResource::collection($projects),
+            'tasks' => TaskResource::collection($tasks)->resolve(),
+            'projects' => ProjectResource::collection($projects)->resolve(),
         ]);
     }
 
@@ -68,8 +68,8 @@ class TaskController extends Controller
         $users = User::select('id', 'name', 'email')->get();
 
         return Inertia::render('Tasks/Create', [
-            'projects' => ProjectResource::collection($projects),
-            'users' => UserResource::collection($users),
+            'projects' => ProjectResource::collection($projects)->resolve(),
+            'users' => UserResource::collection($users)->resolve(),
             'priorities' => \App\Enums\TaskPriority::toArray(),
             'statuses' => \App\Enums\TaskStatus::toArray(),
         ]);
@@ -95,7 +95,7 @@ class TaskController extends Controller
         $task->load(['project', 'assignedUser']);
 
         return Inertia::render('Tasks/Show', [
-            'task' => new TaskResource($task),
+            'task' => (new TaskResource($task))->resolve(),
         ]);
     }
 
@@ -117,9 +117,9 @@ class TaskController extends Controller
         $task->load(['project', 'assignedUser']);
 
         return Inertia::render('Tasks/Edit', [
-            'task' => new TaskResource($task),
-            'projects' => ProjectResource::collection($projects),
-            'users' => UserResource::collection($users),
+            'task' => (new TaskResource($task))->resolve(),
+            'projects' => ProjectResource::collection($projects)->resolve(),
+            'users' => UserResource::collection($users)->resolve(),
             'priorities' => \App\Enums\TaskPriority::toArray(),
             'statuses' => \App\Enums\TaskStatus::toArray(),
         ]);
